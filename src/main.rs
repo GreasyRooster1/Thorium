@@ -39,8 +39,7 @@ fn main() {
 }
 
 fn get_request_response(string: &str) -> Result<String, Box<dyn Error>>{
-    //http://24.4.89.35:9090
-    let response = reqwest::blocking::get(format!("http://127.0.0.1:9090/{string}"))?;
+    let response = reqwest::blocking::get(format!("http://24.4.89.35:9090/{string}"))?;
     let text = response.text()?;
 
     Ok(text)
