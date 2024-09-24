@@ -1,5 +1,5 @@
 #![feature(os_str_display)]
-//#![windows_subsystem = "windows"]
+#![windows_subsystem = "windows"]
 extern crate winapi;
 
 use std::os::windows::prelude::*;
