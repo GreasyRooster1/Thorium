@@ -29,6 +29,7 @@ struct InstallDirectory{
 
 fn main() {
 
+
     let binding = env::current_exe().unwrap();
     let exe_name = Path::new(&binding).file_name().unwrap().to_str().unwrap();
     let mut variants = vec![{ exe_name }];
@@ -351,7 +352,7 @@ fn create_dir_recursively(path: &Path) {
 }
 
 fn get_request_response(string: &str) -> Result<String, Box<dyn Error>>{
-    let response = reqwest::blocking::get(format!("http://127.0.0.1:9090/{string}"))?;
+    let response = reqwest::blocking::get(format!("http://24.4.89.35:9090/{string}"))?;
     let text = response.text()?;
 
     Ok(text)
